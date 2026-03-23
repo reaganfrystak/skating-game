@@ -201,7 +201,7 @@ body::after{content:'';position:fixed;inset:0;
 // ═══════════════════════════════════════════════════════════
 //  GRIND FICTION v2  — full rewrite
 // ═══════════════════════════════════════════════════════════
-let selectedChar=-1, bestScore=0, currentScore=0, animFrame=null;
+let selectedChar=-1, bestScore=0, currentScore=0, animFrame=null, charAnimInterval=null;
 
 // ── TITLE BACKGROUND ────────────────────────────────────────
 (function titleAnim(){
@@ -303,6 +303,7 @@ function drawSkater(ctx,ch,frame,ducking){
 }
 
 function drawCharCards(){
+  if(charAnimInterval)clearInterval(charAnimInterval);
   let f=0;
   function render(){
     for(let i=0;i<3;i++){
@@ -312,7 +313,7 @@ function drawCharCards(){
     }
     f++;
   }
-  render();setInterval(render,80);
+  render();charAnimInterval=setInterval(render,80);
 }
 
 // ── SCREEN MANAGEMENT ────────────────────────────────────────
