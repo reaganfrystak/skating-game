@@ -526,6 +526,20 @@ function update(){
     // Normal ground landing
     if(p.y>=GROUND_Y){
       p.y=GROUND_Y;p.vy=0;p.onGround=true;p.jumping=false;
+      // Landing zone check — did the player land on the far side of a gap in the green zone?
+      g.obstacles.forEach(o=>{
+        if(o.type==='gap'&&!o.landHit){
+          const farEdge=o.x+o.w;
+          if(farEdge<=pc&&farEdge+o.landW>=pc){
+            // CLEAN LAND
+            o.landHit=true;
+            g.combo++;g.comboResetTimer=0;
+            const bonus=g.combo*15;g.score+=bonus;
+            addParticles(PLAYER_X+24,GROUND_Y,'#00F5FF',14);
+            addPopup('CLEAN LAND! +'+bonus,PLAYER_X-20,GROUND_Y-80,'#00F5FF');
+          }
+        }
+      });
     }
   } else {
     // Over the void
@@ -534,23 +548,6 @@ function update(){
     if(p.y>=GROUND_Y&&!p.jumping)p.vy=2;
     // Death if fallen too far
     if(p.y>GROUND_Y+90){die();return;}
-    // Landing zone check — did they come down on the far side in the green zone?
-    if(curGap&&!curGap.landHit){
-      const farEdge=curGap.x+curGap.w;
-      if(pc>=farEdge&&pc<=farEdge+curGap.landW&&p.vy>0&&p.y>=GROUND_Y-6){
-        // CLEAN LAND
-        curGap.landHit=true;
-        p.y=GROUND_Y;p.vy=0;p.onGround=true;p.jumping=false;
-        g.combo++;g.comboResetTimer=0;
-        const bonus=g.combo*15;g.score+=bonus;
-        addParticles(PLAYER_X+24,GROUND_Y,'#00F5FF',14);
-        addPopup('CLEAN LAND! +'+bonus,PLAYER_X-20,GROUND_Y-80,'#00F5FF');
-      } else if(pc>farEdge+curGap.landW&&p.y>=GROUND_Y-6){
-        // Overshot
-        curGap.landHit=true;
-        die();return;
-      }
-    }
   }
 
   // Rail-to-ground fall when off rail
@@ -599,8 +596,10 @@ function update(){
     if(o.x>PLAYER_X+55)continue;
 
     if(o.type==='lowpipe'){
-      // Obstacle occupies: x=[o.x..o.x+o.w], y=[o.y..o.y+o.h]
-      if(overlap(pr.x,pr.y,pr.w,pr.h, o.x,o.y,o.w,o.h)){
+      // Pipe hangs at head height — duck under it.
+      // Collision only covers the upper zone; leaves ~35px from ground for ducking clearance.
+      const pipeCollH=GROUND_Y-35-o.y;
+      if(overlap(pr.x,pr.y,pr.w,pr.h, o.x,o.y,o.w,pipeCollH)){
         die();return;
       }
       // Cleared cleanly
